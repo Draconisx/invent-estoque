@@ -1,36 +1,37 @@
-import { useState, useCallback } from 'react';
+
 import type { Category, Product, Movement } from './types';
 import * as store from './store';
+import { useState, useCallback } from 'react';
 
 export function useStock() {
-  const [categories, setCategories] = useState<Category[]>(store.getCategories);
-  const [products, setProducts] = useState<Product[]>(store.getProducts);
-  const [movements, setMovements] = useState<Movement[]>(store.getMovements);
+  const [categories, setCategories] = useState<Category[]>(store.getCategories([]));
+  const [products, setProducts] = useState<Product[]>(store.getProducts([]));
+  const [movements, setMovements] = useState<Movement[]>(store.getMovements([]));
 
   const refresh = useCallback(() => {
-    setCategories(store.getCategories());
-    setProducts(store.getProducts());
-    setMovements(store.getMovements());
+    setCategories(store.getCategories([]));
+    setProducts(store.getProducts([]));
+    setMovements(store.getMovements([]));
   }, []);
 
   const addCategory = useCallback((name: string) => {
     const c: Category = { id: store.genId(), name };
-    const updated = [...store.getCategories(), c];
+    const updated = [...store.getCategories([]), c];
     store.saveCategories(updated);
     refresh();
   }, [refresh]);
 
   const removeCategory = useCallback((id: string) => {
-    store.saveCategories(store.getCategories().filter(c => c.id !== id));
-    store.saveProducts(store.getProducts().filter(p => p.categoryId !== id));
+    store.saveCategories(store.getCategories([]).filter(c => c.id !== id));
+    store.saveProducts(store.getProducts([]).filter(p => p.categoryId !== id));
     refresh();
   }, [refresh]);
 
   const addProduct = useCallback((categoryId: string, name: string, quantity: number, finalidade: string = '') => {
-    const cats = store.getCategories();
+    const cats = store.getCategories([]);
     const cat = cats.find(c => c.id === categoryId);
     const p: Product = { id: store.genId(), categoryId, name, quantity };
-    const updated = [...store.getProducts(), p];
+    const updated = [...store.getProducts([]), p];
     store.saveProducts(updated);
     const m: Movement = {
       id: store.genId(),
@@ -47,10 +48,10 @@ export function useStock() {
   }, [refresh]);
 
   const removeProduct = useCallback((id: string) => {
-    const prods = store.getProducts();
+    const prods = store.getProducts([]);
     const prod = prods.find(p => p.id === id);
     if (prod && prod.quantity > 0) {
-      const cats = store.getCategories();
+      const cats = store.getCategories([]);
       const cat = cats.find(c => c.id === prod.categoryId);
       const m: Movement = {
         id: store.genId(),
@@ -69,8 +70,8 @@ export function useStock() {
   }, [refresh]);
 
   const adjustQuantity = useCallback((productId: string, delta: number, type: 'add' | 'remove', finalidade: string = '') => {
-    const prods = store.getProducts();
-    const cats = store.getCategories();
+    const prods = store.getProducts([]);
+    const cats = store.getCategories([]);
     const idx = prods.findIndex(p => p.id === productId);
     if (idx === -1) return;
     const prod = prods[idx];
